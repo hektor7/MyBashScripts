@@ -1,0 +1,52 @@
+#!/bin/bash
+
+task=""
+
+function show_message(){
+	echo "$message"
+	notify-send -i "info" "$message"
+}
+
+function run_timer (){
+	message="$(date +%H:%M:%S) Time to work! --> $task"
+	show_message $message
+	message="(date +%H:%M:%S) ########·····Break!·····########"
+	sleep $work_time && beep -f 600 -r 2 && show_message $message
+	
+	message="(date +%H:%M:%S) Your rest has finished!"
+	sleep $rest_time && show_message $message 
+	beep -f 600 -r 2
+}
+
+function validate_params(){
+	re='^[0-9]+$' #Checking for a number
+	if ! [[ $1 =~ $re ]] ; then
+	   echo "First argument isn't a number" >&2; exit 1
+	fi
+	if ! [[ $2 =~ $re ]] ; then
+	   echo "Second argument isn't a number" >&2; exit 1
+	fi
+}
+
+clear
+if [ "$#" -eq 1 ]; then
+	message="Default mode 25 minutes for work, 5 minutes for rest."
+	show_message $message
+	work_time=$((25 * 60))
+	rest_time=$((5 * 60))
+	task=$1
+	run_timer $work_time $rest_time $task 
+else
+	if [ "$#" -eq 3 ]; then
+		validate_params $1 $2
+		message="Custom mode $1 minutes for work, $2 minutes for rest."
+		show_message $message
+		work_time=$(($1 * 60))
+		rest_time=$(($2 * 60))
+		task=$3
+		run_timer $work_time $rest_time $task
+	else
+		notify-send -i "error" "Illegal number if parameters, you should use 'pomodoro minutes_work minutes_pause'"
+		echo "error: Illegal number if parameters, you should use 'pomodoro minutes_work minutes_pause'" >&2; exit 1
+	fi
+fi

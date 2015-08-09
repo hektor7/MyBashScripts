@@ -1,0 +1,67 @@
+#!/bin/bash
+#La opción -a crea recursivamente una copia exacta, con permisos y propietarios de los ficheros.
+#La opción --delete borra en destino si el fichero en origen fue borrado.
+#Para backup en red, será necesario usar --no-whole-file para que solo se copien los cambios en el fichero, -z para comprimir al enviar
+#-c si se desea comprobar con CRC si el fichero es exactamente igual.
+#rsync -avvb --delete --backup-dir=$PWD/rsync/backup_$(date +%y%m%d%H%M) /home/hector/Documentos /media/sg3tb/backup_medion/
+
+SOURCE_ROOT="/home/hector/"
+DESTINATION_DIR="/mnt/backup/Backups/backup_E6220/"
+SEARCH_PATTERN="/mnt/backup/Backups/"
+LOG_DIR="/home/hector"
+
+
+function backup (){
+	
+	message="Backup dir $source_dir"
+	write_log $message
+	
+		
+	cd $DESTINATION_DIR
+		
+	rsync -avb --delete --backup-dir=$PWD/rsync/backup_$(date +%y%m%d%H%M) $SOURCE_ROOT$source_dir $DESTINATION_DIR
+	
+	#notify-send -i "/home/hector/Imágenes/iconos/success.ico" "Backup process has finished successfully!"
+  
+}
+
+function write_log(){
+	echo $message >> "/home/hector/local_backup.log"
+}
+
+function init(){
+	#echo "Last execution: $(date)" >> "$LOG_DIR/backup.log"
+	message="Last execution: $(date)"
+	write_log $message
+	if test "$(ls -A $SEARCH_PATTERN)"; then # There are tasks to do :)
+		message="Initializing backup..."
+		write_log $message
+		
+		source_dir="Documentos"
+		backup $source_dir
+
+		source_dir="Imágenes"
+		backup $source_dir
+
+		source_dir="Desarrollo"
+		backup $source_dir
+
+		source_dir="Descargas"
+		backup $source_dir
+
+		source_dir="Videos"
+		backup $source_dir
+
+		source_dir="Música"
+		backup $source_dir
+		
+	else
+		message="External disk is unplugged so there is nothing to do..."
+		write_log $message
+	fi
+	
+	message="Finished on: $(date)"
+	write_log $message
+}
+
+init
