@@ -13,6 +13,8 @@ USERNAME="hektor7@gmail.com"
 WEBDAV_BASE_URL="https://dav.box.com/dav/"
 GPG_RECIPIENT="hektor7@gmail.com"
 REMOTE_HOST="www.box.com"
+MAX_FILE_SIZE=245
+SPLIT_SIZE=200
 
 function write_log(){
 	echo $message >> "/home/hector/box_backup.log"
@@ -167,10 +169,34 @@ function backup_dir(){
 		#for i in `find "$source_dir" -type f -name "*.tar.gz.gpg"`
 		for i in *.tar.gz.gpg
 		do
-			file=$i
-			upload_file "$file" "$destination_path"
 			
-			#mark_as_finished $file
+			
+			echo "Before size"
+			filesize=$(stat --printf="%s" "$i")
+			echo "size of $i $filesize"
+			filesize=$(($filesize/1048576))
+			echo "File size ---> $filesize Max: $MAX_FILE_SIZE"
+			
+			if [ $filesize -lt $MAX_FILE_SIZE ]; then
+			
+				echo "File size less than $MAX_FILE_SIZE"
+				file=$i
+				upload_file "$file" "$destination_path"
+				
+			else
+				split --bytes=$SPLIT_SIZE"M" "$i" "$i"split_
+				echo "$i File more than $MAX_FILE_SIZE"
+				
+				for j in "$i"split_*
+				do
+					echo "Files to upload---> $j"
+					file=$j
+					upload_file "$file" "$destination_path"
+				done
+				
+			fi
+			file=$i
+			mark_as_finished $file
 		done
 		
 		#clean_dir $source_dir
@@ -194,10 +220,10 @@ function init(){
 	if [ "$?" == 0 ]; then
 		
 		# Dir to be saved
-		#destination_path="Fotos/"
-		#source_dir="/mnt/backup/Backups/backup_medion/Imágenes/Fotos"
-		destination_path="prueba/"
-		source_dir="/home/hector/prueba"
+		destination_path="Fotos/"
+		source_dir="/mnt/backup/Backups/backup_medion/Imágenes/Fotos"
+		#destination_path="prueba/"
+		#source_dir="/home/hector/prueba"
 		backup_dir "$source_dir" "$destination_path"
 		
 	else
