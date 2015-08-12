@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#TODO: If the file is > 250Mb split the file
-#TODO: Mark as completed
 #TODO: Clean up
 #TODO: Avoid to execute backup if the folder is marked as finished.
 
