@@ -1,7 +1,6 @@
 #!/bin/bash
 
 #TODO: Clean up
-#TODO: Avoid to execute backup if the folder is marked as finished.
 
 EXTERNAL_DISK_PATH="/mnt/backup/Backups/"
 SEARCH_PATTERN="/home/hector/"
