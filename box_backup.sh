@@ -98,11 +98,19 @@ function compress_subfolders(){
 	#for i in `find -mindepth 1 -type d`
 	for i in */ #Directories...
 	do
-		echo "i value: $i"
 		i=${i//.\/}
-		directory="$(echo "$source_dir/$i")"
-		echo "Directory to compress_folder $directory"
-		compress_folder "$directory"
+		
+		#If is completed do nothing.
+		finished_file="${i%/}"
+		if [ -f "$finished_file.tar.gz.gpg.backup.finished" ]; then
+			echo "Dir $i is marked as finished. Skiping compression."
+		else
+			directory="$(echo "$source_dir/$i")"
+			echo "Directory to compress_folder $directory"
+			compress_folder "$directory"
+		fi
+				
+		
 	done
 }
 
@@ -156,9 +164,15 @@ function backup_dir(){
 		#for i in `find $source_dir -type f -name "*.tar.gz"`
 		for i in *.tar.gz
 		do
-			echo "File to encrypt_file ---> $i"
-			source_file="$i"
-			encrypt_file "$source_file"
+			#If is completed do nothing.
+			if [ -f "$i.gpg.backup.finished" ]; then
+				echo "Dir $i is marked as finished. Skiping encrypting."
+			else
+				echo "File to encrypt_file ---> $i"
+				source_file="$i"
+				encrypt_file "$source_file"
+			fi
+			
 		done
 		
 		message="Looking for .tar.gz.gpg files in order to upload them"
@@ -167,34 +181,39 @@ function backup_dir(){
 		#for i in `find "$source_dir" -type f -name "*.tar.gz.gpg"`
 		for i in *.tar.gz.gpg
 		do
-			
-			
-			echo "Before size"
-			filesize=$(stat --printf="%s" "$i")
-			echo "size of $i $filesize"
-			filesize=$(($filesize/1048576))
-			echo "File size ---> $filesize Max: $MAX_FILE_SIZE"
-			
-			if [ $filesize -lt $MAX_FILE_SIZE ]; then
-			
-				echo "File size less than $MAX_FILE_SIZE"
-				file=$i
-				upload_file "$file" "$destination_path"
-				
+			#If is completed do nothing.
+			if [ -f "$i.backup.finished" ]; then
+				echo "Dir $i is marked as finished. Spliting and uploading."
 			else
-				split --bytes=$SPLIT_SIZE"M" "$i" "$i"split_
-				echo "$i File more than $MAX_FILE_SIZE"
+				echo "Before size"
+				filesize=$(stat --printf="%s" "$i")
+				echo "size of $i $filesize"
+				filesize=$(($filesize/1048576))
+				echo "File size ---> $filesize Max: $MAX_FILE_SIZE"
 				
-				for j in "$i"split_*
-				do
-					echo "Files to upload---> $j"
-					file=$j
+				if [ $filesize -lt $MAX_FILE_SIZE ]; then
+				
+					echo "File size less than $MAX_FILE_SIZE"
+					file=$i
 					upload_file "$file" "$destination_path"
-				done
-				
+					
+				else
+					split --bytes=$SPLIT_SIZE"M" "$i" "$i"split_
+					echo "$i File more than $MAX_FILE_SIZE"
+					
+					for j in "$i"split_*
+					do
+						echo "Files to upload---> $j"
+						file=$j
+						upload_file "$file" "$destination_path"
+					done
+					
+				fi
+				file=$i
+				mark_as_finished $file
 			fi
-			file=$i
-			mark_as_finished $file
+			
+			
 		done
 		
 		#clean_dir $source_dir
@@ -219,7 +238,7 @@ function init(){
 		
 		# Dir to be saved
 		destination_path="Fotos/"
-		source_dir="/mnt/backup/Backups/backup_medion/Imágenes/Fotos"
+		source_dir="/mnt/backup/Imágenes/Fotos"
 		#destination_path="prueba/"
 		#source_dir="/home/hector/prueba"
 		backup_dir "$source_dir" "$destination_path"
