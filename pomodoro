@@ -10,10 +10,10 @@ function show_message(){
 function run_timer (){
 	message="$(date +%H:%M:%S) Time to work! --> $task"
 	show_message $message
-	message="(date +%H:%M:%S) ########·····Break!·····########"
+	message="$(date +%H:%M:%S) ########·····Break!·····########"
 	sleep $work_time && beep -f 600 -r 2 && show_message $message
 	
-	message="(date +%H:%M:%S) Your rest has finished!"
+	message="$(date +%H:%M:%S) Your rest has finished!"
 	sleep $rest_time && show_message $message 
 	beep -f 600 -r 2
 }
@@ -46,7 +46,7 @@ else
 		task=$3
 		run_timer $work_time $rest_time $task
 	else
-		notify-send -i "error" "Illegal number if parameters, you should use 'pomodoro minutes_work minutes_pause'"
+		notify-send -i "error" "Illegal number if parameters, you should use 'pomodoro minutes_work minutes_pause task_message' or 'pomodoro task_message' for default time."
 		echo "error: Illegal number if parameters, you should use 'pomodoro minutes_work minutes_pause'" >&2; exit 1
 	fi
 fi
